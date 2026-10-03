@@ -44,6 +44,7 @@
   #mineRow { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; font-size: 9px; line-height: 1.6; }
   #mineRow[hidden] { display: none; }
   #infoNav { display: flex; gap: 8px; }
+  hr { border: 0; border-top: 2px solid #808080; border-bottom: 2px solid #fff; }
   .infoDialog { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; border: 4px outset #fff; background: #c0c0c0; color: #161616; }
   .infoDialog::backdrop { background: rgb(0 0 0 / 60%); }
   .infoDialog h2 { font-size: 16px; margin-bottom: 20px; }
@@ -92,6 +93,7 @@
       <button class="key" id="guessMode" aria-pressed="false">GUESS</button>
       <button class="key" id="newGame">NEW GAME</button>
     </div>
+    <hr>
     <nav id="infoNav" aria-label="Game information">
       <button class="key" data-dialog="aboutDialog" aria-haspopup="dialog">ABOUT</button>
       <button class="key" data-dialog="helpDialog" aria-haspopup="dialog">HELP</button>
