@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WHO DIS</title>
+<meta name="description" content="Guess Mark's person before he finds out everything about yours." />
+<meta property="og:title" content="WHO DIS" />
+<meta property="og:description" content="Guess Mark's person before he finds out everything about yours." />
+<meta property="og:image" content="https://gilabarreto.github.io/who-dis/og.png" />
+<meta property="og:url" content="https://gilabarreto.github.io/who-dis/" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕵️</text></svg>" />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { min-height: 100dvh; background: #3b5998; color: #1c1e21; font-family: 'Press Start 2P', monospace; }
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, select:focus-visible { outline: 3px solid #ffd23f; outline-offset: 2px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1180px; margin: 0 auto; padding: 14px 16px; color: #fff; text-shadow: 2px 2px #000; }
+  h1 { font-size: 22px; }
+  #round { font-size: 11px; }
+  #layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; max-width: 1180px; margin: 0 auto; padding: 0 16px 16px; }
+  #board { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-content: start; }
+  .card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; border: 3px outset #fff; background: #dfe6f3; font-size: 8px; transition: opacity 150ms; }
+  .card svg, .avatar svg { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+  .card.down { opacity: 0.25; border-style: inset; }
+  .card.mine { background: #ffd23f; }
+  body.guessing .card:not(:disabled) { border-color: #f33; }
+  .card:disabled { cursor: default; }
+  #panel { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 4px outset #fff; background: #c0c0c0; align-self: start; }
+  #markRow { display: grid; grid-template-columns: 72px 1fr; gap: 10px; align-items: start; }
+  .avatar { border: 3px inset #fff; background: #dfe6f3; }
+  .avatar span { display: block; text-align: center; font-size: 8px; padding: 3px 0; }
+  #bubble { padding: 10px; border: 2px solid #000; background: #fff; font: 15px/1.4 Arial, sans-serif; min-height: 72px; }
+  #bubble b { display: block; margin-bottom: 6px; font-size: 13px; color: #3b5998; }
+  .row { display: flex; gap: 8px; }
+  .row[hidden] { display: none; }
+  .key { flex: 1; padding: 10px 8px; border: 3px outset #fff; background: #e6e6e6; font-size: 10px; }
+  .key:disabled { color: #888; cursor: default; }
+  .key[aria-pressed="true"] { border-style: inset; background: #f33; color: #fff; }
+  select { flex: 1; min-width: 0; padding: 8px; border: 3px inset #fff; background: #fff; font: 14px Arial, sans-serif; }
+  #mineRow { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; font-size: 9px; line-height: 1.6; }
+  #mineRow[hidden] { display: none; }
+  #infoNav { display: flex; gap: 8px; }
+  .infoDialog { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; border: 4px outset #fff; background: #c0c0c0; color: #161616; }
+  .infoDialog::backdrop { background: rgb(0 0 0 / 60%); }
+  .infoDialog h2 { font-size: 16px; margin-bottom: 20px; }
+  .infoDialog p { font: 17px/1.5 Arial, sans-serif; margin-bottom: 16px; }
+  .infoDialog a { color: #000080; }
+  .infoDialog form { display: flex; justify-content: flex-end; gap: 8px; }
+  .infoDialog form button { padding: 12px; border: 3px outset #fff; background: #c0c0c0; font-size: 10px; }
+  @media (max-width: 860px) {
+    #layout { grid-template-columns: 1fr; }
+    #panel { order: -1; }
+  }
+  @media (max-width: 520px) {
+    header { padding: 12px; }
+    h1 { font-size: 16px; }
+    #layout { padding: 0 8px 8px; gap: 10px; }
+    #board { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .card { font-size: 7px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>WHO DIS?</h1>
+  <span id="round" aria-live="polite"></span>
+</header>
+<div id="layout">
+  <main id="board" aria-label="Board"></main>
+  <aside id="panel">
+    <div id="markRow">
+      <div class="avatar" id="markFace"><span>MARK</span></div>
+      <p id="bubble" aria-live="polite"></p>
+    </div>
+    <div class="row" id="answerRow" hidden>
+      <button class="key" id="yes">YES</button>
+      <button class="key" id="no">NO</button>
+    </div>
+    <div class="row" id="askRow" hidden>
+      <select id="question" aria-label="Your question"></select>
+      <button class="key" id="ask" style="flex: 0">ASK</button>
+    </div>
+    <div class="row">
+      <button class="key" id="guessMode" aria-pressed="false">GUESS</button>
+      <button class="key" id="newGame">NEW GAME</button>
+    </div>
+    <div id="mineRow" hidden>
+      <div class="avatar" id="mineFace"></div>
+      <span id="mineName"></span>
+    </div>
+    <nav id="infoNav" aria-label="Game information">
+      <button class="key" data-dialog="aboutDialog" aria-haspopup="dialog">ABOUT</button>
+      <button class="key" data-dialog="helpDialog" aria-haspopup="dialog">HELP</button>
+    </nav>
+  </aside>
+</div>
+<dialog id="aboutDialog" class="infoDialog" aria-labelledby="aboutTitle">
+  <h2 id="aboutTitle">ABOUT WHO DIS</h2>
+  <p>WHO DIS is a modern-day take on the classic Guess Who game. Mark has picked a person and so have you. You ask about faces. Mark asks about something else.</p>
+  <p>Victor Barreto, a developer and retro gaming enthusiast, recreated and developed this game. <a href="https://github.com/gilabarreto" target="_blank" rel="noopener noreferrer">Click here</a> to learn more about him and explore his other projects.</p>
+  <form method="dialog"><button>CLOSE</button></form>
+</dialog>
+<dialog id="helpDialog" class="infoDialog" aria-labelledby="helpTitle">
+  <h2 id="helpTitle">HOW TO PLAY</h2>
+  <p>Pick your person from the board. Mark secretly picks his.</p>
+  <p>Each round you ask Mark a question about his person, then he asks you one about yours. Click faces to flip down the ones it can't be.</p>
+  <p>Ready? Press GUESS and click a face, any time. Get it right and you win. Get it wrong, or run out of rounds, and Mark wins.</p>
+  <form method="dialog"><button>CLOSE</button></form>
+</dialog>
+<dialog id="endDialog" class="infoDialog" aria-labelledby="endTitle">
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <form method="dialog"><button>CLOSE</button><button id="playAgain">PLAY AGAIN</button></form>
+</dialog>
+<script src="who.js"></script>
+<script>
+  const HAIR = { black: '#2b2b2b', brown: '#6b3e1f', blonde: '#e8c547', red: '#c8461e', white: '#f4f4f4' };
+  const SKIN = ['#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+  const SHIRT = ['#e74c3c', '#2e86de', '#27ae60', '#8e44ad', '#f39c12', '#16a085'];
+
+  // 16x16 pixel face drawn from the same traits the questions check.
+  function face(c, skin, shirt) {
+    const px = [], hair = HAIR[c.hair];
+    const r = (x, y, w, h, fill) => px.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`);
+    if (c.long) r(3, 3, 10, 11, hair);
+    r(3, 14, 10, 2, shirt); r(7, 13, 2, 1, skin);
+    r(4, 4, 8, 9, skin); r(3, 7, 1, 2, skin); r(12, 7, 1, 2, skin);
+    if (c.bald) { r(4, 6, 1, 2, hair); r(11, 6, 1, 2, hair); }
+    else { r(4, 3, 8, 2, hair); r(4, 5, 1, 2, hair); r(11, 5, 1, 2, hair); }
+    if (c.hat) { r(4, 1, 8, 3, '#34495e'); r(3, 4, 10, 1, '#34495e'); }
+    // Glasses: tinted lenses joined by a bridge, eyes drawn on top
+    if (c.glasses) { r(5, 6, 2, 2, '#bfe3ff'); r(9, 6, 2, 2, '#bfe3ff'); r(7, 6, 2, 1, '#000'); r(4, 6, 1, 1, '#000'); r(11, 6, 1, 1, '#000'); }
+    const eye = c.blueEyes ? '#2f6fe0' : '#3a2410';
+    r(6, 7, 1, 1, eye); r(9, 7, 1, 1, eye);
+    // Women wear earrings and eyelashes
+    if (c.woman) { r(3, 9, 1, 1, '#ffd23f'); r(12, 9, 1, 1, '#ffd23f'); r(6, 6, 1, 1, '#000'); r(9, 6, 1, 1, '#000'); }
+    if (c.bigNose) { r(7, 8, 2, 1, '#0003'); r(6, 9, 4, 1, '#0003'); } else r(7, 9, 2, 1, '#0002');
+    if (c.rosy) { r(5, 10, 1, 1, '#ff7b9c'); r(10, 10, 1, 1, '#ff7b9c'); }
+    if (c.beard) { r(4, 11, 8, 2, hair); r(4, 9, 1, 2, hair); r(11, 9, 1, 2, hair); r(5, 13, 6, 1, hair); }
+    if (c.mustache) r(6, 10, 4, 1, hair);
+    r(6, 11, 4, 1, '#9b2335');
+    return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${px.join('')}</svg>`;
+  }
+  const faceOf = i => face(CHARACTERS[i], SKIN[i * 7 % SKIN.length], SHIRT[i % SHIRT.length]);
+
+  const $ = id => document.getElementById(id);
+  const board = $('board'), bubble = $('bubble'), select = $('question'), guessMode = $('guessMode');
+  $('markFace').insertAdjacentHTML('afterbegin', face({ hair: 'brown' }, '#f1c27d', '#8a8f98'));
+
+  let g, lastAnswer;
+  const cards = CHARACTERS.map((c, i) => {
+    const card = document.createElement('button');
+    card.className = 'card';
+    card.innerHTML = `${faceOf(i)}<span>${c.name}</span>`;
+    card.onclick = () => clickCard(i);
+    board.append(card);
+    return card;
+  });
+
+  function clickCard(i) {
+    if (g.phase === 'pick') pick(g, i);
+    else if (guessMode.ariaPressed === 'true') guess(g, i);
+    else cards[i].classList.toggle('down');
+    render();
+  }
+
+  function newGame() {
+    g = makeGame();
+    lastAnswer = null;
+    cards.forEach(card => card.classList.remove('down', 'mine'));
+    guessMode.ariaPressed = 'false';
+    render();
+  }
+
+  function render() {
+    const playing = g.phase === 'ask' || g.phase === 'answer';
+    const secret = CHARACTERS[g.secret].name;
+    $('round').textContent = g.phase === 'pick' ? '' : `ROUND ${g.round}/${ROUNDS}`;
+    $('answerRow').hidden = g.phase !== 'answer';
+    $('askRow').hidden = g.phase !== 'ask';
+    guessMode.disabled = !playing;
+    if (!playing) guessMode.ariaPressed = 'false';
+    document.body.classList.toggle('guessing', guessMode.ariaPressed === 'true');
+    cards.forEach((card, i) => {
+      card.classList.toggle('mine', i === g.mine);
+      card.disabled = !playing && g.phase !== 'pick';
+      card.setAttribute('aria-label', `${CHARACTERS[i].name}${card.classList.contains('down') ? ', flipped down' : ''}`);
+    });
+
+    $('mineRow').hidden = g.mine === null;
+    if (g.mine !== null) {
+      $('mineFace').innerHTML = faceOf(g.mine);
+      $('mineName').textContent = `YOUR PERSON: ${CHARACTERS[g.mine].name.toUpperCase()}`;
+    }
+
+    // Only questions not asked yet
+    select.replaceChildren(...QUESTIONS.flatMap((q, i) => g.asked.has(i) ? [] : [new Option(q.text, i)]));
+
+    const said = lastAnswer ? `<b>${lastAnswer}</b>` : '';
+    if (g.phase === 'pick') bubble.innerHTML = 'Hi! Pick your person from the board. I already picked mine.';
+    else if (g.phase === 'answer') bubble.innerHTML = said + markQuestion(g);
+    else if (g.phase === 'ask') bubble.innerHTML = said + (select.length ? 'Your turn. Ask me anything, or press GUESS.' : 'You\'re out of questions. Time to GUESS.');
+    else bubble.innerHTML = g.phase === 'won' ? `Fine. It was ${secret}.` : `It was ${secret}.`;
+
+    if (g.phase === 'won' || g.phase === 'lost') {
+      const outOfQuestions = g.phase === 'lost' && g.guess === undefined;
+      const secrets = `${g.yes} secret${g.yes === 1 ? '' : 's'}`;
+      $('endTitle').textContent = g.phase === 'won' ? 'YOU GOT IT! 🎉' : outOfQuestions ? 'MARK KNOWS TOO MUCH' : 'WRONG PERSON';
+      $('endText').textContent = g.phase === 'won'
+        ? `It was ${secret}. Mark still learned ${secrets} about ${CHARACTERS[g.mine].name}, though.`
+        : outOfQuestions
+          ? `You ran out of rounds and shared ${secrets} about ${CHARACTERS[g.mine].name}. His person was ${secret}.`
+          : `Mark's person was ${secret}. Thanks for the data about ${CHARACTERS[g.mine].name}.`;
+      if (!$('endDialog').open) $('endDialog').showModal();
+    }
+  }
+
+  $('yes').onclick = () => { answerMark(g, true); lastAnswer = null; render(); };
+  $('no').onclick = () => { answerMark(g, false); lastAnswer = null; render(); };
+  $('ask').onclick = () => {
+    const q = Number(select.value);
+    lastAnswer = `${QUESTIONS[q].text} ${ask(g, q) ? 'YES.' : 'NO.'}`;
+    render();
+  };
+  guessMode.onclick = () => { guessMode.ariaPressed = guessMode.ariaPressed === 'true' ? 'false' : 'true'; render(); };
+  $('newGame').onclick = newGame;
+  $('playAgain').onclick = newGame;
+  document.querySelectorAll('[data-dialog]').forEach(button => {
+    button.addEventListener('click', () => $(button.dataset.dialog).showModal());
+  });
+
+  newGame();
+</script>
+</body>
+</html>
