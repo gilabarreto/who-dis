@@ -162,15 +162,16 @@
   });
 
   function clickCard(i) {
-    if (g.phase === 'pick') pick(g, i);
+    if (g.phase === 'pick') { pick(g, i); lastAnswer = null; }
     else if (guessMode.ariaPressed === 'true') guess(g, i);
     else cards[i].classList.toggle('down');
     render();
   }
 
-  function newGame() {
+  // Mark announces new games, since before picking a person the board looks the same.
+  function newGame(announce) {
     g = makeGame();
-    lastAnswer = null;
+    lastAnswer = announce ? 'NEW GAME!' : null;
     cards.forEach(card => card.classList.remove('down', 'mine'));
     guessMode.ariaPressed = 'false';
     render();
@@ -201,7 +202,7 @@
     select.replaceChildren(...QUESTIONS.flatMap((q, i) => g.asked.has(i) ? [] : [new Option(q.text, i)]));
 
     const said = lastAnswer ? `<b>${lastAnswer}</b>` : '';
-    if (g.phase === 'pick') bubble.innerHTML = 'Hi! Pick your person from the board. I already picked mine.';
+    if (g.phase === 'pick') bubble.innerHTML = said + (lastAnswer ? 'I picked someone new. Pick your person from the board.' : 'Hi! Pick your person from the board. I already picked mine.');
     else if (g.phase === 'answer') bubble.innerHTML = said + markQuestion(g);
     else if (g.phase === 'ask') bubble.innerHTML = said + (select.length ? 'Your turn. Ask me anything, or press GUESS.' : 'You\'re out of questions. Time to GUESS.');
     else bubble.innerHTML = g.phase === 'won' ? `Fine. It was ${secret}.` : `It was ${secret}.`;
@@ -227,8 +228,8 @@
     render();
   };
   guessMode.onclick = () => { guessMode.ariaPressed = guessMode.ariaPressed === 'true' ? 'false' : 'true'; render(); };
-  $('newGame').onclick = newGame;
-  $('playAgain').onclick = newGame;
+  $('newGame').onclick = () => newGame(true);
+  $('playAgain').onclick = () => newGame(true);
   document.querySelectorAll('[data-dialog]').forEach(button => {
     button.addEventListener('click', () => $(button.dataset.dialog).showModal());
   });
